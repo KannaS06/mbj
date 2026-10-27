@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESSENCES - Maison du Bois et du Jouet</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts & Fontshare -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=switzer@400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #F4F2EB;
+            --text-color: #2A2826;
+            --line-color: rgba(42, 40, 38, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            scroll-behavior: smooth;
+        }
+
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-switzer { font-family: 'Switzer', sans-serif; }
+
+        ::selection {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .hairline-b { border-bottom: 1px solid var(--line-color); }
+        .hairline-t { border-top: 1px solid var(--line-color); }
+        .hairline-l { border-left: 1px solid var(--line-color); }
+        
+        /* --- ANIMATIONS --- */
+
+        /* 1. L'image qui suit le curseur (Fondu ralenti à 1s) */
+        #cursor-image {
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+        }
+
+        /* 2. Reveal d'image par rideau */
+        .reveal-mask {
+            position: relative;
+            overflow: hidden;
+        }
+        .reveal-mask::after {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            background-color: var(--bg-color);
+            z-index: 10;
+            transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+            transform-origin: top;
+        }
+        .reveal-mask.is-visible::after {
+            transform: translateY(-101%);
+        }
+
+        /* 3. Reveal Typographique par le bas */
+        .text-mask-container {
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: top;
+        }
+        .text-mask-element {
+            display: inline-block;
+            transform: translateY(110%);
+            transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .text-mask-container.is-visible .text-mask-element {
+            transform: translateY(0);
+        }
+
+        /* 4. Fondu classique */
+        .reveal-fade {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1), transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .reveal-fade.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 5. Parallaxe de l'image intérieure */
+        .img-parallax {
+            transform: scale(1.15) translateY(0);
+            will-change: transform;
+        }
+
+        /* Bouton magnétique */
+        .magnetic-wrap { display: inline-block; }
+        .magnetic-element { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+
+    <!-- --- LOADING SCREEN --- -->
+    <div id="loader" class="fixed inset-0 z-[1000] bg-[#F4F2EB] flex flex-col items-center justify-center transition-transform duration-1000 cubic-bezier(0.77, 0, 0.175, 1)">
+        <div class="text-mask-container mb-6">
+            <h2 id="loader-title" class="font-switzer text-4xl md:text-6xl text-[#2A2826] text-mask-element">
+                La Maison du Bois et du Jouet
+            </h2>
+        </div>
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-48 h-[1px] bg-[#2A2826]/10 relative overflow-hidden">
+                <div id="loader-bar" class="absolute inset-y-0 left-0 bg-[#2A2826] w-0 transition-all duration-75"></div>
+            </div>
+            <div id="loader-progress" class="text-xs uppercase tracking-widest text-[#4A4641] font-medium opacity-0 transition-opacity duration-500">0%</div>
+        </div>
+    </div>
+
+    <!-- Image volante (Taille augmentée : w-72 md:w-96) -->
+    <img id="cursor-image" src="" alt="Objet en détail" class="fixed w-72 md:w-96 aspect-[4/3] object-cover pointer-events-none opacity-0 z-[90] shadow-2xl">
+
+    <!-- --- HERO SECTION --- -->
+    <section class="relative min-h-screen p-6 md:p-12 flex flex-col justify-between">
+        
+        <header class="flex justify-between items-start text-xs md:text-sm uppercase tracking-widest hairline-b pb-6">
+            <div class="reveal-fade leading-tight font-medium">
+                Maison du Bois<br />et du Jouet
+            </div>
+            <div class="reveal-fade text-right delay-200">
+                Collection<br />— 2026
+            </div>
+        </header>
+
+        <div class="flex-grow flex flex-col justify-center my-20">
+            <div class="text-mask-container w-full text-center md:text-left reveal-trigger">
+                <h1 class="text-[14vw] md:text-[13vw] leading-none tracking-tight font-switzer text-mask-element delay-300">
+                    ESSENCES
+                </h1>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-end gap-8">
+            <div class="w-full md:w-1/3 text-mask-container reveal-trigger">
+                <p class="font-switzer text-xl md:text-3xl leading-snug text-[#4A4641] text-mask-element delay-500">
+                    Le monde raconté par la forme et la matière.
+                </p>
+            </div>
+            
+            <div class="hidden md:flex flex-col items-end magnetic-wrap reveal-fade delay-700">
+                <span class="text-xs uppercase tracking-widest cursor-pointer magnetic-element inline-block px-4 py-2 border border-transparent hover:border-[#2A2826]/30 rounded-full transition-colors duration-500">
+                    Découvrir l'exposition ↓
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- CONCEPT SECTION --- -->
+    <section class="px-6 md:px-12 py-24 md:py-40 max-w-[1400px] mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-20 items-center">
+            
+            <div class="md:col-span-5 md:col-start-1">
+                <div class="reveal-mask aspect-[4/5] bg-gray-200 parallax-container">
+                    <div class="img-parallax">
+                        <img 
+                            src="images/2bdc774e4115dd10b88511edea6660bd.jpg" 
+                            alt="Texture macro de bois sombre" 
+                            class="w-full h-full object-cover"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-6 md:col-start-7 flex flex-col gap-8 md:-mt-24">
+                <div>
+                    <div class="text-mask-container reveal-trigger mb-2 block">
+                        <h2 class="text-3xl md:text-5xl font-switzer tracking-tight leading-tight text-mask-element">Chaque objet</h2>
+                    </div>
+                    <div class="text-mask-container reveal-trigger block mb-8">
+                        <h2 class="text-3xl md:text-5xl font-switzer tracking-tight leading-tight text-mask-element delay-100">raconte une culture.</h2>
+                    </div>
+                    
+                    <p class="reveal-fade text-sm md:text-base font-light leading-relaxed text-[#4A4641] max-w-md delay-300">
+                        Dans cette exposition inédite, le bois n'est plus un simple support, il est l'ADN du jouet. Une poupée Kokeshi née des forêts japonaises, une toupie taillée dans l'ébène africain... Découvrez comment l'essence locale devient l'identité même de l'objet ludique.
+                    </p>
+                </div>
+                
+                <div class="reveal-mask aspect-[3/2] bg-gray-200 mt-12 w-4/5 ml-auto parallax-container delay-500">
+                    <div class="img-parallax">
+                        <img 
+                            src="images/9b6bf34391d3b8a3418c1f7fc84fd687.jpg" 
+                            alt="Texture de bois clair" 
+                            class="w-full h-full object-cover"
+                        />
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- --- GALERIE VISUELLE --- -->
+    <section class="px-6 md:px-12 py-24 max-w-[1400px] mx-auto hairline-t">
+        <div class="reveal-fade mb-16">
+            <h3 class="text-xs uppercase tracking-widest hairline-b pb-4 text-[#2A2826]">
+                Matières à l'œuvre
+            </h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
+            <div class="md:col-span-4">
+                <div class="reveal-mask aspect-[3/4] bg-gray-200 group parallax-container delay-100">
+                    <div class="img-parallax">
+                        <img src="images/ec0aaa0ec210629bed1f757131f32256.jpg" alt="Pièces de bois" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-[filter] duration-1000">
+                    </div>
+                </div>
+                <div class="reveal-fade mt-4 flex justify-between text-xs font-light text-[#4A4641] delay-300">
+                    <span>01</span><span class="font-switzer text-sm">Équilibres</span>
+                </div>
+            </div>
+            
+            <div class="md:col-span-8">
+                <div class="reveal-mask aspect-[16/9] md:aspect-auto md:h-full bg-gray-200 group parallax-container delay-300">
+                    <div class="img-parallax">
+                        <img src="images/eba59e6912297f6fee4581bed8a17a4f.jpg" alt="Courbes de bois" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-[filter] duration-1000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-7">
+                <div class="reveal-mask aspect-[16/9] md:aspect-auto md:h-full bg-gray-200 group parallax-container delay-100">
+                    <div class="img-parallax">
+                        <img src="images/3dd96273d5f6595d8d004a6cb065d78f.jpg" alt="Nervures de bois" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-[filter] duration-1000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-5">
+                <div class="reveal-mask aspect-[4/3] bg-gray-200 group parallax-container delay-300">
+                    <div class="img-parallax">
+                        <img src="images/atelier.jpg" alt="Outils et bois" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-[filter] duration-1000">
+                    </div>
+                </div>
+                <div class="reveal-fade mt-4 flex justify-between text-xs font-light text-[#4A4641] delay-500">
+                    <span>02</span><span class="font-switzer text-sm">L'Atelier</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- L'ARTISANAT --- -->
+    <section class="px-6 md:px-12 py-24 md:py-32 max-w-[1400px] mx-auto hairline-t">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-20 items-center">
+            <div class="md:col-span-6 md:col-start-1 order-2 md:order-1 flex flex-col gap-8 md:mt-24">
+                <div>
+                    <span class="reveal-fade text-xs uppercase tracking-widest text-gray-500 mb-4 block">Le Processus</span>
+                    <div class="text-mask-container reveal-trigger mb-2 block">
+                        <h2 class="text-3xl md:text-5xl font-switzer tracking-tight leading-tight text-mask-element">Le geste avant</h2>
+                    </div>
+                    <div class="text-mask-container reveal-trigger block mb-8">
+                        <h2 class="text-3xl md:text-5xl font-switzer tracking-tight leading-tight text-mask-element delay-100">la forme.</h2>
+                    </div>
+                    <p class="reveal-fade text-sm md:text-base font-light leading-relaxed text-[#4A4641] max-w-md mb-6 delay-300">
+                        L'exposition remonte le fil du temps jusqu'à l'atelier. Copeaux, sève, outils séculaires : découvrez le dialogue intime entre l'artisan et l'essence brute. Un hommage aux mains qui façonnent la culture avant que l'objet ne prenne vie.
+                    </p>
+                </div>
+            </div>
+
+            <div class="md:col-span-5 md:col-start-8 order-1 md:order-2">
+                <div class="reveal-mask aspect-[3/4] bg-gray-200 parallax-container group">
+                    <div class="img-parallax">
+                        <img 
+                            src="images/804a214d32c690a7a98c46eacdd8072b.jpg" 
+                            alt="Mains travaillant le bois" 
+                            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-[filter] duration-1000"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- LIST SECTION --- -->
+    <section class="px-6 md:px-12 py-24 bg-[#6f8f72] text-[#F4F2EB] cursor-default relative z-10">
+        <div class="max-w-[1400px] mx-auto relative">
+            <div class="reveal-fade mb-16">
+                <h3 class="text-xs uppercase tracking-widest hairline-b border-[#F4F2EB]/20 pb-4">
+                    Territoires de jeu
+                </h3>
+            </div>
+
+            <div class="flex flex-col gap-4 list-container">
+                <!-- Japon -->
+                <div class="reveal-fade popup-trigger relative" 
+                     data-title="Poupée Kokeshi" data-region="Japon" data-bois="Mizuki & Érable" 
+                     data-desc="Symbole d'enfance au Japon, la Kokeshi est traditionnellement tournée dans le bois de Mizuki, un arbre réputé pour sa sève abondante censée protéger des incendies."
+                     data-img="images/kokeshi.jpg">
+                    <div class="group grid grid-cols-1 md:grid-cols-4 gap-4 items-center hairline-b border-[#F4F2EB]/10 pb-6 pt-2 hover:border-[#F4F2EB]/60 transition-colors cursor-pointer">
+                        <div class="text-xs md:text-sm uppercase tracking-widest col-span-1 text-[#F4F2EB]">Japon</div>
+                        <div class="font-switzer text-2xl md:text-4xl col-span-2 group-hover:text-white transition-all group-hover:translate-x-4 duration-500 ease-out transform text-[#F4F2EB]">Poupée Kokeshi</div>
+                        <div class="text-xs md:text-sm tracking-wide text-right md:text-left flex justify-between items-center">
+                            <span class="opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out">Mizuki & Érable</span>
+                            <span class="text-xl group-hover:rotate-45 transition-transform duration-500 ease-out">↗</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Afrique -->
+                <div class="reveal-fade popup-trigger relative delay-100" 
+                     data-title="Toupie Traditionnelle" data-region="Afrique" data-bois="Ébène & Wengé" 
+                     data-desc="Taillée dans la masse d'un bois dense et lourd comme l'ébène, cette toupie utilise le poids naturel de son essence pour prolonger son temps de rotation."
+                     data-img="images/toupie.jpg">
+                    <div class="group grid grid-cols-1 md:grid-cols-4 gap-4 items-center hairline-b border-[#F4F2EB]/10 pb-6 pt-2 hover:border-[#F4F2EB]/60 transition-colors cursor-pointer">
+                        <div class="text-xs md:text-sm uppercase tracking-widest col-span-1 text-[#F4F2EB]">Afrique</div>
+                        <div class="font-switzer text-2xl md:text-4xl col-span-2 group-hover:text-white transition-all group-hover:translate-x-4 duration-500 ease-out transform text-[#F4F2EB]">Toupie Traditionnelle</div>
+                        <div class="text-xs md:text-sm tracking-wide text-right md:text-left flex justify-between items-center">
+                            <span class="opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out">Ébène & Wengé</span>
+                            <span class="text-xl group-hover:rotate-45 transition-transform duration-500 ease-out">↗</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Europe -->
+                <div class="reveal-fade popup-trigger relative delay-200" 
+                     data-title="Cheval à bascule" data-region="Europe" data-bois="Hêtre & Chêne" 
+                     data-desc="Robuste et intemporel, le cheval à bascule européen puise sa force dans les forêts tempérées. Le hêtre, facile à cintrer, permet les courbures élégantes des patins."
+                     data-img="images/cheval.jpg">
+                    <div class="group grid grid-cols-1 md:grid-cols-4 gap-4 items-center hairline-b border-[#F4F2EB]/10 pb-6 pt-2 hover:border-[#F4F2EB]/60 transition-colors cursor-pointer">
+                        <div class="text-xs md:text-sm uppercase tracking-widest col-span-1 text-[#F4F2EB]">Europe</div>
+                        <div class="font-switzer text-2xl md:text-4xl col-span-2 group-hover:text-white transition-all group-hover:translate-x-4 duration-500 ease-out transform text-[#F4F2EB]">Cheval à bascule</div>
+                        <div class="text-xs md:text-sm tracking-wide text-right md:text-left flex justify-between items-center">
+                            <span class="opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out">Hêtre & Chêne</span>
+                            <span class="text-xl group-hover:rotate-45 transition-transform duration-500 ease-out">↗</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amériques -->
+                <div class="reveal-fade popup-trigger relative delay-300" 
+                     data-title="Yo-yo Traditionnel" data-region="Amériques" data-bois="Noyer & Palissandre" 
+                     data-desc="L'un des plus vieux jouets du monde, taillé ici dans les bois précieux d'Amérique du Sud. La densité du palissandre lui confère une inertie de rotation parfaite."
+                     data-img="images/yoyo.jpg">
+                    <div class="group grid grid-cols-1 md:grid-cols-4 gap-4 items-center hairline-b border-[#F4F2EB]/10 pb-6 pt-2 hover:border-[#F4F2EB]/60 transition-colors cursor-pointer">
+                        <div class="text-xs md:text-sm uppercase tracking-widest col-span-1 text-[#F4F2EB]">Amériques</div>
+                        <div class="font-switzer text-2xl md:text-4xl col-span-2 group-hover:text-white transition-all group-hover:translate-x-4 duration-500 ease-out transform text-[#F4F2EB]">Yo-yo Traditionnel</div>
+                        <div class="text-xs md:text-sm tracking-wide text-right md:text-left flex justify-between items-center">
+                            <span class="opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out">Noyer & Palissandre</span>
+                            <span class="text-xl group-hover:rotate-45 transition-transform duration-500 ease-out">↗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- MANIFESTO --- -->
+    <section class="px-6 md:px-12 py-32 md:py-48 max-w-5xl mx-auto text-center">
+        <div class="text-mask-container reveal-trigger">
+            <!-- Ajout de la classe italic ici -->
+            <h2 class="font-switzer italic text-3xl md:text-5xl lg:text-6xl leading-tight text-[#2A2826] text-mask-element">
+                "Toucher l'écorce, peser l'objet, c'est lire silencieusement l'histoire d'un peuple et de sa forêt."
+            </h2>
+        </div>
+        <div class="reveal-fade mt-16 w-px h-24 bg-[#2A2826]/30 mx-auto delay-300"></div>
+    </section>
+
+    <!-- --- BOUTIQUE / ÉDITIONS --- -->
+    <section class="px-6 md:px-12 py-24 bg-white text-[#2A2826] hairline-t hairline-b relative z-10">
+        <div class="max-w-[1400px] mx-auto">
+            <div class="reveal-fade flex justify-between items-end mb-16">
+                <h3 class="text-xs uppercase tracking-widest">Boutique & Éditions</h3>
+                <a href="#" class="text-xs border-b border-[#2A2826] pb-1 hover:text-gray-500 transition-colors">VOIR TOUT</a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-4">
+                <div class="reveal-fade group cursor-pointer delay-100">
+                    <div class="aspect-[3/4] bg-[#F4F2EB] mb-4 overflow-hidden p-8 flex items-center justify-center relative">
+                        <img src="images/Gemini_Generated_Image_nxbtr6nxbtr6nxbt.png" alt="Catalogue d'exposition" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700 shadow-xl">
+                    </div>
+                    <h4 class="font-switzer text-xl mb-1 group-hover:text-gray-500 transition-colors">Catalogue "Essences"</h4>
+                    <div class="flex justify-between items-center text-sm font-light text-gray-500">
+                        <span>Édition Limitée</span><span>35,00 €</span>
+                    </div>
+                </div>
+
+                <div class="reveal-fade group cursor-pointer delay-200">
+                    <div class="aspect-[3/4] bg-[#F4F2EB] mb-4 overflow-hidden p-8 flex items-center justify-center relative">
+                        <img src="images/kokeshi_artisan.jpg" alt="Kokeshi artisanale" class="w-3/4 h-auto object-cover group-hover:scale-105 transition-transform duration-700 shadow-xl">
+                    </div>
+                    <h4 class="font-switzer text-xl mb-1 group-hover:text-gray-500 transition-colors">Kokeshi d'Artisan</h4>
+                    <div class="flex justify-between items-center text-sm font-light text-gray-500">
+                        <span>Fait main (Japon)</span><span>85,00 €</span>
+                    </div>
+                </div>
+
+                <div class="reveal-fade group cursor-pointer delay-300">
+                    <div class="aspect-[3/4] bg-[#F4F2EB] mb-4 overflow-hidden p-8 flex items-center justify-center relative">
+                        <img src="images/affiche.png" alt="Affiche de l'exposition" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700 shadow-xl">
+                    </div>
+                    <h4 class="font-switzer text-xl mb-1 group-hover:text-gray-500 transition-colors">Affiche de l'exposition</h4>
+                    <div class="flex justify-between items-center text-sm font-light text-gray-500">
+                        <span>Papier d'art 300g</span><span>20,00 €</span>
+                    </div>
+                </div>
+
+                <div class="reveal-fade group cursor-pointer delay-400">
+                    <div class="aspect-[3/4] bg-[#F4F2EB] mb-4 overflow-hidden p-8 flex items-center justify-center relative">
+                        <img src="images/toupie_ebene.jpg" alt="Toupie en bois" class="w-3/4 h-auto object-cover group-hover:scale-105 transition-transform duration-700 shadow-xl">
+                    </div>
+                    <h4 class="font-switzer text-xl mb-1 group-hover:text-gray-500 transition-colors">Toupie en Ébène</h4>
+                    <div class="flex justify-between items-center text-sm font-light text-gray-500">
+                        <span>Réplique officielle</span><span>42,00 €</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- --- INFORMATIONS & FOOTER --- -->
+    <section class="px-6 md:px-12 py-24 bg-[#EBE7DF] text-[#2A2826]">
+        <div class="max-w-[1400px] mx-auto">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16 mb-24">
+                <div class="reveal-fade delay-100 border-l border-[#2A2826]/20 pl-6 h-full">
+                    <h4 class="font-switzer text-2xl mb-6">Admission</h4>
+                    <ul class="font-light text-[#4A4641] space-y-4 text-sm md:text-base">
+                        <li class="flex justify-between hairline-b border-[#2A2826]/10 pb-2"><span>Plein tarif</span> <span>8,00 €</span></li>
+                        <li class="flex justify-between hairline-b border-[#2A2826]/10 pb-2"><span>Tarif réduit</span> <span>5,00 €</span></li>
+                        <li class="flex justify-between hairline-b border-[#2A2826]/10 pb-2"><span>Enfants (-12 ans)</span> <span>Gratuit</span></li>
+                    </ul>
+                </div>
+
+                <div class="reveal-fade delay-200 border-l border-[#2A2826]/20 pl-6 h-full">
+                    <h4 class="font-switzer text-2xl mb-6">Horaires</h4>
+                    <ul class="font-light text-[#4A4641] space-y-2 text-sm md:text-base">
+                        <li class="flex justify-between"><strong>Lundi - Dimanche</strong> <span>10:00 — 18:00</span></li>
+                        <li class="mt-4 italic text-sm text-gray-500">*Dernière entrée à 17h15.</li>
+                    </ul>
+                </div>
+
+                <div class="reveal-fade delay-300 border-l border-[#2A2826]/20 pl-6 h-full">
+                    <h4 class="font-switzer text-2xl mb-6">Accès</h4>
+                    <p class="font-light text-[#4A4641] leading-relaxed mb-6 text-sm md:text-base">
+                        Moulin de l'Oule<br/>81200 Mazamet, France
+                    </p>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="flex flex-col md:flex-row justify-between items-end gap-16 hairline-t pt-16">
+                <div class="w-full md:w-1/3 order-2 md:order-1 reveal-fade">
+                    <img src="images/faviconnn.png" alt="Logo Maison du Bois et du Jouet" class="h-16 w-16 object-contain mb-8 mix-blend-multiply opacity-90">
+                    <div class="text-sm font-light">
+                        <strong class="font-medium">Maison du Bois et du Jouet</strong><br />
+                        <a href="#" class="underline underline-offset-4 hover:opacity-50 transition-opacity">www.maisonboisjouet.fr</a>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-2/3 order-1 md:order-2 text-right text-mask-container reveal-trigger">
+                    <div class="text-[12vw] md:text-[9vw] leading-[0.85] tracking-tight font-switzer text-mask-element">
+                        14.5.—30.9.<br/>2026
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- --- POP-UP MODAL --- -->
+    <div id="info-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 md:p-12">
+        <div id="modal-overlay" class="absolute inset-0 bg-[#2A2826]/90 backdrop-blur-md cursor-pointer opacity-0 transition-opacity duration-700"></div>
+        
+        <div id="modal-content" class="relative bg-[#F4F2EB] w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row transform translate-y-12 opacity-0 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) shadow-2xl">
+            
+            <button id="close-modal" class="absolute top-4 right-4 md:top-6 md:right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/50 hover:bg-white text-[#2A2826] transition-colors">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M1 1L13 13M1 13L13 1"/>
+                </svg>
+            </button>
+
+            <div class="w-full md:w-1/2 h-64 md:h-auto bg-gray-200">
+                <img id="modal-img" src="" alt="Objet en détail" class="w-full h-full object-cover">
+            </div>
+
+            <div class="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
+                <span id="modal-region" class="text-xs uppercase tracking-widest text-gray-500 mb-4 block">Région</span>
+                <h3 id="modal-title" class="font-switzer text-3xl md:text-5xl text-[#2A2826] mb-6 leading-tight">Titre</h3>
+                
+                <div class="hairline-t pt-6 mb-6">
+                    <span class="text-xs uppercase tracking-widest text-gray-500 block mb-1">Essences</span>
+                    <span id="modal-bois" class="font-medium text-lg">Bois</span>
+                </div>
+                
+                <p id="modal-desc" class="font-light leading-relaxed text-[#4A4641]">
+                    Description
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 1. LOADER ---
+            const loader = document.getElementById('loader');
+            const progressEl = document.getElementById('loader-progress');
+            const barEl = document.getElementById('loader-bar');
+            const titleContainer = document.querySelector('#loader .text-mask-container');
+            let progress = 0;
+
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => { titleContainer.classList.add('is-visible'); }, 100);
+            setTimeout(() => { progressEl.classList.remove('opacity-0'); }, 400);
+
+            const loadingInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 15) + 5; 
+                if (progress > 100) progress = 100;
+                
+                progressEl.textContent = progress + '%';
+                barEl.style.width = progress + '%';
+
+                if (progress === 100) {
+                    clearInterval(loadingInterval);
+                    setTimeout(() => {
+                        loader.style.transform = 'translateY(-100%)';
+                        loader.classList.add('pointer-events-none');
+                        document.body.style.overflow = '';
+                        setTimeout(initAnimations, 400);
+                    }, 400);
+                }
+            }, 30);
+
+
+            // --- 2. INTERSECTION OBSERVER ---
+            function initAnimations() {
+                const observerOptions = {
+                    threshold: 0.05,
+                    rootMargin: '0px 0px -50px 0px'
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            if(entry.target.classList.contains('reveal-mask')) {
+                                entry.target.classList.add('is-visible');
+                            }
+                            else if(entry.target.classList.contains('reveal-trigger')) {
+                                entry.target.classList.add('is-visible');
+                            }
+                            else if(entry.target.classList.contains('reveal-fade')) {
+                                entry.target.classList.add('is-visible');
+                            }
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, observerOptions);
+
+                document.querySelectorAll('.reveal-mask, .reveal-trigger, .reveal-fade').forEach(el => {
+                    observer.observe(el);
+                });
+            }
+
+
+            // --- 3 & 5. RENDER LOOP (PARALLAXE FLUIDE + CURSEUR) ---
+            const parallaxElements = Array.from(document.querySelectorAll('.img-parallax')).map(el => ({
+                el,
+                currentY: 0,
+                targetY: 0,
+                speed: 0.08 // Adouci à 0.08 pour ne pas déborder du cadre (1.15 scale)
+            }));
+
+            const cursorImg = document.getElementById('cursor-image');
+            const triggers = document.querySelectorAll('.popup-trigger');
+            let isModalOpen = false;
+            let mouseX = 0, mouseY = 0;
+            let imgX = 0, imgY = 0;
+
+            // Enregistrement continu de la souris
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            // Boucle de rendu unique pour des performances maximales (60fps)
+            function renderLoop() {
+                // --- A. Parallaxe avec Lerp (Linear Interpolation) ---
+                const windowHeight = window.innerHeight;
+                
+                parallaxElements.forEach(item => {
+                    const rect = item.el.parentElement.getBoundingClientRect();
+                    
+                    if (rect.top < windowHeight && rect.bottom > 0) {
+                        const elementCenter = rect.top + rect.height / 2;
+                        const viewportCenter = windowHeight / 2;
+                        
+                        item.targetY = (elementCenter - viewportCenter) * item.speed;
+                    }
+                    
+                    item.currentY += (item.targetY - item.currentY) * 0.08;
+                    item.el.style.transform = `scale(1.15) translate3d(0, ${-item.currentY}px, 0)`;
+                });
+
+                // --- B. Curseur Image (Smooth follow) ---
+                if(cursorImg.classList.contains('opacity-100')) {
+                    imgX += (mouseX - imgX) * 0.15;
+                    imgY += (mouseY - imgY) * 0.15;
+                    cursorImg.style.transform = `translate3d(${imgX + 20}px, ${imgY + 20}px, 0)`;
+                }
+
+                requestAnimationFrame(renderLoop);
+            }
+            renderLoop();
+
+
+            // --- 4. BOUTON MAGNÉTIQUE ---
+            const magneticWraps = document.querySelectorAll('.magnetic-wrap');
+            magneticWraps.forEach(wrap => {
+                const element = wrap.querySelector('.magnetic-element');
+                wrap.addEventListener('mousemove', (e) => {
+                    const rect = wrap.getBoundingClientRect();
+                    const h = rect.width / 2;
+                    const v = rect.height / 2;
+                    const x = e.clientX - rect.left - h;
+                    const y = e.clientY - rect.top - v;
+                    element.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+                });
+                wrap.addEventListener('mouseleave', () => {
+                    element.style.transform = `translate(0px, 0px)`;
+                });
+            });
+
+
+            // --- Évènements du curseur image (Hover) ---
+            triggers.forEach(trigger => {
+                trigger.addEventListener('mouseenter', () => {
+                    if(!isModalOpen) {
+                        cursorImg.src = trigger.dataset.img;
+                        // Placement immédiat (virtuel) sous la souris avant le fondu
+                        imgX = mouseX; imgY = mouseY;
+                        cursorImg.style.transform = `translate3d(${imgX + 20}px, ${imgY + 20}px, 0)`;
+                        
+                        cursorImg.classList.remove('opacity-0');
+                        cursorImg.classList.add('opacity-100');
+                    }
+                });
+                trigger.addEventListener('mouseleave', () => {
+                    cursorImg.classList.remove('opacity-100');
+                    cursorImg.classList.add('opacity-0');
+                });
+            });
+
+
+            // --- 6. GESTION DES POP-UPS ---
+            const modal = document.getElementById('info-modal');
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            const closeBtn = document.getElementById('close-modal');
+            
+            const mTitle = document.getElementById('modal-title');
+            const mRegion = document.getElementById('modal-region');
+            const mBois = document.getElementById('modal-bois');
+            const mDesc = document.getElementById('modal-desc');
+            const mImg = document.getElementById('modal-img');
+
+            const openModal = (data) => {
+                isModalOpen = true;
+                cursorImg.classList.remove('opacity-100');
+                cursorImg.classList.add('opacity-0');
+
+                mTitle.textContent = data.title;
+                mRegion.textContent = data.region;
+                mBois.textContent = data.bois;
+                mDesc.textContent = data.desc;
+                mImg.src = data.img;
+
+                modal.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                    overlay.classList.add('opacity-100');
+                    content.classList.remove('translate-y-12', 'opacity-0');
+                    content.classList.add('translate-y-0', 'opacity-100');
+                }, 10);
+                
+                document.body.style.overflow = 'hidden';
+            };
+
+            const closeModal = () => {
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0');
+                content.classList.remove('translate-y-0', 'opacity-100');
+                content.classList.add('translate-y-12', 'opacity-0');
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                    isModalOpen = false;
+                }, 700);
+            };
+
+            triggers.forEach(trigger => {
+                trigger.addEventListener('click', () => {
+                    openModal(trigger.dataset);
+                });
+            });
+
+            closeBtn.addEventListener('click', closeModal);
+            overlay.addEventListener('click', closeModal);
+            
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
